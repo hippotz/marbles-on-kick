@@ -1,0 +1,24 @@
+{
+  "name": "marbles-on-kick",
+  "version": "1.0.0",
+  "main": "index.js",
+  "devDependencies": {
+    "prettier": "^2.8.8"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "build": "pkg package.json"
+  },
+  "author": "",
+  "license": "MIT",
+  "description": "",
+  "dependencies": {
+    "ws": "^8.13.0"
+  },
+  "bin": "index.js",
+  "pkg": {
+    "scripts": "*.js",
+    "targets": [ "node18-win-x64" ],
+    "outputPath": "dist"
+  }
+}
