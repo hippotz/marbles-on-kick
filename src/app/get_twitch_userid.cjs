@@ -5,22 +5,22 @@ async function getTwichUserId(nickline, passline) {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
     ws.on('open', () => {
-      console.log('=== CONNECTED TO TWITCH ===');
+      log('=== CONNECTED TO TWITCH ===');
       ws.send('CAP REQ :twitch.tv/membership twitch.tv/tags twitch.tv/commands\r\n');
       ws.send(passline + '\r\n');
       ws.send(nickline + '\r\n');
     });
     ws.on('close', () => {
-      console.log('=== DISCONNECTED FROM TWITCH ===');
+      log('=== DISCONNECTED FROM TWITCH ===');
       reject?.('abruptly disconnected');
     });
     ws.on('error', (err) => {
-      console.log(' === TWITCH ERROR === ', err);
+      log(' === TWITCH ERROR === ', err);
       reject?.(err);
     });
     ws.on('message', (buffer) => {
       const msg = buffer.toString('utf8');
-      console.log('TWITCH IRC MESSAGE: ' + msg);
+      log('TWITCH IRC MESSAGE: ' + msg);
       const match = msg.match(/user-id=(\d+)/);
       if (match) {
         resolve(match[1]);

@@ -1,6 +1,6 @@
 const { WebSocketServer } = require('ws');
-const { getTwichUserId } = require('./get_twitch_userid.js');
-const { getKickChatStream, SUBLEVEL } = require('./kick.js');
+const { getTwichUserId } = require('./get_twitch_userid.cjs');
+const { getKickChatStream, SUBLEVEL } = require('./kick.cjs');
 
 const wss = new WebSocketServer({ port: 8069 });
 const serverName = 'tmi.twitch.tv';
@@ -9,17 +9,19 @@ function getUserHostName(nickname) {
   return nickname + '!' + nickname + '@' + nickname + '.' + serverName;
 }
 
-function runFakeServer() {
+function runFakeServer(kickUsername, kickChatroomId) {
+  let kickWebSocket;
+  let killed;
+  log('Starting server...');
   wss.on('connection', (ws) => {
     let pingInterval;
-    let kickWebSocket;
     let nickname;
     let twitchIrcChannel;
     let twitchUserId;
     let userHostName;
 
     function onKickChatCallback(sublevel, username, displayName, message) {
-      console.log(
+      log(
         `on kick callback sublevel: ${sublevel}, username: ${username}, displayName: ${displayName}, message: ${message} `
       );
       let ircMessage = `@badge-info=ohhay/1,`;
@@ -30,7 +32,7 @@ function runFakeServer() {
         ircMessage += ',vip/1';
       }
       ircMessage += `;display-name=${displayName}`;
-      if (nickname === username) {
+      if (kickUsername === username) {
         ircMessage += `;user-id=${twitchUserId};user-type=`;
       }
 
@@ -39,9 +41,9 @@ function runFakeServer() {
       send(ircMessage);
     }
 
-    ws.on('error', console.error);
+    ws.on('error', logError);
     ws.on('close', () => {
-      console.log('=== MARBLES CONNECTION CLOSED ===');
+      log('=== MARBLES CONNECTION CLOSED ===');
       if (kickWebSocket) {
         kickWebSocket.close();
       }
@@ -49,12 +51,12 @@ function runFakeServer() {
     });
 
     function send(str) {
-      console.log('sent: %s', str);
+      log(`sent: ${str}`);
       ws.send(str + '\r\n');
     }
 
     ws.on('open', () => {
-      console.log('=== CONNECTED TO MARBLES ===');
+      log('=== CONNECTED TO MARBLES ===');
     });
 
     let passline; // retain this so we can grab the userId from twitch's irc server in get_twitch_userid.js
@@ -64,7 +66,7 @@ function runFakeServer() {
       const command = data.toString().trim();
       // Print each line except the oauth token line
       if (command && !command.startsWith('PASS')) {
-        console.log('received: %s', data.toString());
+        log(`received: ${data.toString()}`);
       }
       if (command.startsWith('CAP REQ')) {
         const capabilities = command.split(':', 2)[1].trim().split(/\s+/);
@@ -89,21 +91,21 @@ function runFakeServer() {
       } else if (command.startsWith('JOIN')) {
         twitchIrcChannel = command.split(/\s+/, 2)[1].trim();
         if (twitchIrcChannel !== '#' + nickname) {
-          console.error(`somehow the channel (${twitchIrcChannel}) isn't the same as the nick (${nickname})`);
+          logError(`somehow the channel (${twitchIrcChannel}) isn't the same as the nick (${nickname})`);
           exit();
         }
         send(`:${userHostName} JOIN ${twitchIrcChannel}`);
         // upon connection connect to kick
-        kickWebSocket = await getKickChatStream(nickname, onKickChatCallback);
+        kickWebSocket = await getKickChatStream(kickChatroomId, onKickChatCallback);
 
         // Setup a retry
         kickWebSocket.on('close', async () => {
           const reconnectFn = async (backoff) => {
-            console.log('Reconnecting to kick...');
+            log('Reconnecting to kick...');
             try {
-              kickWebSocket = await getKickChatStream(nickname, onKickChatCallback);
+              kickWebSocket = await getKickChatStream(kickChatroomId, onKickChatCallback);
             } catch (e) {
-              console.error(e);
+              logError(e);
               setTimeout(() => reconnectFn(backoff * 2), Math.min(1000 * backoff, 30 * 1000));
             }
           };
@@ -112,6 +114,12 @@ function runFakeServer() {
       }
     });
   });
+  return () => {
+    log('Stopping server...');
+    killed = true;
+    kickWebSocket?.close();
+    wss?.close();
+  };
 }
 module.exports = {
   runFakeServer,

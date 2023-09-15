@@ -14,21 +14,11 @@ const kickChatUrl = 'wss://ws-us2.pusher.com/app/eb1d5f283081a78b932c?protocol=7
 function getKickChatroomId(channelName) {
   if (hardcodedRooms[channelName]) {
     return hardcodedRooms[channelName];
-  } else {
-    try {
-      return JSON.parse(readFileSync('./chatroomIds.json'))?.[channelName] || '';
-    } catch (err) {
-      console.log('Failed to load chatroomIds.json!', err);
-    }
   }
+  return '';
 }
 
-async function getKickChatStream(chatroom, onChatCallback) {
-  const chatroomId = getKickChatroomId(chatroom);
-  if (!chatroomId) {
-    console.log('=== ERROR === Missing chatroomId check the README');
-    exit();
-  }
+async function getKickChatStream(chatroomId, onChatCallback) {
   const longChatroomId = `chatrooms.${chatroomId}.v2`;
 
   const ws = new WebSocket(kickChatUrl);
@@ -45,34 +35,33 @@ async function getKickChatStream(chatroom, onChatCallback) {
 
   function sendJson(json) {
     const str = JSON.stringify(json);
-    console.log('sending:');
-    console.log(str);
+    log('sending: ' + str);
     ws.send(Buffer.from(str));
   }
 
-  ws.on('error', console.error);
+  ws.on('error', logError);
 
   ws.on('open', () => {
-    console.log('=== CONNECTED TO KICK ===');
+    log('=== CONNECTED TO KICK ===');
     connected = true;
   });
 
   ws.on('close', () => {
-    console.log('=== KICK CONNECTION CLOSED ===');
+    log('=== KICK CONNECTION CLOSED ===');
     connected = false;
   });
 
   ws.on('message', (buffer) => {
     const received = buffer.toString('utf8');
     const msg = JSON.parse(received);
-    console.log('received: ' + received);
+    log('received: ' + received);
     let data = msg.data;
     if (data) {
       const isEmptyObject = data === '{}';
       if (typeof data === 'string') {
         data = JSON.parse(data);
         if (!isEmptyObject) {
-          console.log(data);
+          log(data);
         }
       }
     }
@@ -126,4 +115,5 @@ async function getKickChatStream(chatroom, onChatCallback) {
 module.exports = {
   getKickChatStream,
   SUBLEVEL,
+  getKickChatroomId,
 };
