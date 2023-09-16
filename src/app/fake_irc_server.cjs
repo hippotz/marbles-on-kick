@@ -2,7 +2,6 @@ const { WebSocketServer } = require('ws');
 const { getTwichUserId } = require('./get_twitch_userid.cjs');
 const { getKickChatStream, SUBLEVEL } = require('./kick.cjs');
 
-const wss = new WebSocketServer({ port: 8069 });
 const serverName = 'tmi.twitch.tv';
 
 function getUserHostName(nickname) {
@@ -11,7 +10,7 @@ function getUserHostName(nickname) {
 
 function runFakeServer(kickUsername, kickChatroomId) {
   let kickWebSocket;
-  let killed;
+  const wss = new WebSocketServer({ port: 8069 });
   log('Starting server...');
   wss.on('connection', (ws) => {
     let pingInterval;
@@ -116,8 +115,7 @@ function runFakeServer(kickUsername, kickChatroomId) {
   });
   return () => {
     log('Stopping server...');
-    killed = true;
-    kickWebSocket?.close();
+    kickWebSocket?.terminate();
     wss?.close();
   };
 }

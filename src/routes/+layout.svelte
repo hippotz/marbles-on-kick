@@ -13,7 +13,7 @@
 </script>
 
 {#if ready}
-  <div class="pt-8 h-full">
+  <div class="h-full">
     <slot />
   </div>
 {/if}

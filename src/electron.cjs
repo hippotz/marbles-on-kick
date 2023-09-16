@@ -7,7 +7,6 @@ const { getFilePath, getStateOfBinary, patchGameString, patchGame, unpatchGame }
 const { getKickChatroomId } = require('./app/kick.cjs');
 const { runFakeServer } = require('./app/fake_irc_server.cjs');
 const { spawn } = require('node:child_process');
-const { exit } = require('process');
 
 try {
   require('electron-reloader')(module);
@@ -28,7 +27,6 @@ function createWindow() {
 
   const mainWindow = new BrowserWindow({
     backgroundColor: 'whitesmoke',
-    titleBarStyle: 'hidden',
     autoHideMenuBar: true,
     /*
 		trafficLightPosition: {
@@ -183,6 +181,7 @@ ipcMain.on('launch-marbles', (_, kickDataAndPath) => {
     spawnedProcess.on('close', (code) => {
       log('Marbles closed with exit code: ' + code);
     });
+    mainWindow.webContents.send('marbles-started');
     mainWindow.webContents.send('server-started');
   }
 });
@@ -191,8 +190,19 @@ ipcMain.on('kill-marbles', () => {
   closeFakeServer?.();
   closeFakeServer = () => {};
   marblesRunning = false;
-  // spawn('taskkill', ['/pid', spawnedProcess.pid, '/f', '/t']);
-  // not sure if this kill command works on windows
   spawnedProcess?.kill();
+  mainWindow.webContents.send('server-killed');
+});
+
+ipcMain.on('launch-server', (kickData) => {
+  marblesRunning = true;
+  closeFakeServer = runFakeServer(kickData.username, kickData.chatroomId);
+  mainWindow.webContents.send('server-started');
+});
+
+ipcMain.on('kill-server', () => {
+  closeFakeServer?.();
+  closeFakeServer = () => {};
+  marblesRunning = false;
   mainWindow.webContents.send('server-killed');
 });

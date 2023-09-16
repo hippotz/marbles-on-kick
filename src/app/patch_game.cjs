@@ -65,6 +65,10 @@ function getStateOfBinary(filePath) {
     return [foundFind, foundReplace];
   } catch (e) {
     log('Failed to read executable', e);
+  } finally {
+    if (fd) {
+      closeSync(fd);
+    }
   }
 }
 

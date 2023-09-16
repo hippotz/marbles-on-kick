@@ -10,6 +10,7 @@
   let logStore = getStore('logger', '');
   let started = getStore('started', false);
   let showLog = getStore('show-log', false);
+  let marblesStarted = getStore('marblesStarted', false);
 
   const maxLogSize = 1000 * 1000; // 1 mb
   const oldChunksRemoved = 1000 * 100; // 100 kb
@@ -35,6 +36,10 @@
     });
     window.electron.receive('server-killed', () => {
       $started = false;
+      $marblesStarted = false;
+    });
+    window.electron.receive('marbles-started', () => {
+      $marblesStarted = true;
     });
   }
   const nextButtonColor = ' bg-blue-500 hover:bg-blue-700 ';
@@ -139,12 +144,23 @@
                       window.electron.send('launch-marbles', { ...$kickData, path: $marblesExecData?.path })}
                     >Launch Marbles</button
                   >
+                  <button class={extraButtonColor + smallButtonClasses}
+                  on:click={() => {
+                    window.electron.send('launch-server', $kickData)
+                  }}>Launch chat server only</button>
                 {:else}
                   <div>Running...</div>
-                  <button
-                    class={extraButtonColor + smallButtonClasses}
-                    on:click={() => window.electron.send('kill-marbles')}>Stop Server</button
-                  >
+                  {#if $marblesStarted}
+                    <button
+                      class={nextButtonColor + smallButtonClasses}
+                      on:click={() => window.electron.send('kill-marbles')}>Stop Marbles</button
+                    >
+                  {:else}
+                    <button
+                      class={extraButtonColor + smallButtonClasses}
+                      on:click={() => window.electron.send('kill-marbles')}>Stop Server</button
+                    >
+                  {/if}
                 {/if}
               </div>
             </li>
