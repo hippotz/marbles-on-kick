@@ -1,6 +1,6 @@
 const { WebSocketServer } = require('ws');
 const { getTwichUserId } = require('./get_twitch_userid.cjs');
-const { getKickChatStream, SUBLEVEL } = require('./kick.cjs');
+const { getKickChatStream, BADGES } = require('./kick.cjs');
 
 const serverName = 'tmi.twitch.tv';
 
@@ -19,16 +19,25 @@ function runFakeServer(kickUsername, kickChatroomId) {
     let twitchUserId;
     let userHostName;
 
-    function onKickChatCallback(sublevel, username, displayName, message) {
+    function onKickChatCallback(badges, username, displayName, message) {
       log(
-        `on kick callback sublevel: ${sublevel}, username: ${username}, displayName: ${displayName}, message: ${message} `
+        `on kick callback badges: ${badges}, username: ${username}, displayName: ${displayName}, message: ${message} `
       );
-      let ircMessage = `@badge-info=ohhay/1,`;
-      if (sublevel & SUBLEVEL.subscriber) {
-        ircMessage += ',subscriber/1';
+      let ircMessage = `@badge-info=;badges=ohhay/1,`;
+      if (badges & BADGES.broadcaster) {
+        ircMessage += ',broadcaster/1';
       }
-      if (sublevel & SUBLEVEL.vip) {
+      if (badges & BADGES.moderator) {
+        ircMessage += ',moderator/1';
+      }
+      if (badges & BADGES.vip) {
         ircMessage += ',vip/1';
+      }
+      if (badges & BADGES.founder) {
+        ircMessage += ',founder/1';
+      }
+      if (badges & BADGES.subscriber) {
+        ircMessage += ',subscriber/1';
       }
       ircMessage += `;display-name=${displayName}`;
       if (kickUsername === username) {
@@ -121,5 +130,5 @@ function runFakeServer(kickUsername, kickChatroomId) {
 }
 module.exports = {
   runFakeServer,
-  SUBLEVEL,
+  BADGES,
 };

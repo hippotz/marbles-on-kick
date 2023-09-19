@@ -2,10 +2,12 @@ const WebSocket = require('ws');
 const { readFileSync } = require('node:fs');
 const hardcodedRooms = require('./chatroomIds.json');
 
-const SUBLEVEL = {
+const BADGES = {
   subscriber: 1,
   broadcaster: 2,
-  vip: 4, // TODO: not used on kick
+  vip: 4,
+  founder: 8,
+  moderator: 16,
 };
 
 const kickChatUrl = 'wss://ws-us2.pusher.com/app/eb1d5f283081a78b932c?protocol=7&client=js&version=7.6.0&flash=false';
@@ -92,28 +94,34 @@ async function getKickChatStream(chatroomId, onChatCallback) {
       */
       sendJson({ event: 'pusher:subscribe', data: { auth: '', channel: longChatroomId } });
     } else if (msg.event === 'App\\Events\\ChatMessageEvent' && msg.channel === longChatroomId) {
-      let sublevel = 0;
+      let badges = 0;
       data.sender.identity.badges
         .map((b) => {
           switch (b.type) {
             case 'subscriber':
-              return SUBLEVEL.subscriber;
+              return BADGES.subscriber;
             case 'broadcaster': //This doesnt seem to matter, roomId has to equal userId for broadcaster to be red
-              return SUBLEVEL.broadcaster;
+              return BADGES.broadcaster;
+            case 'vip':
+              return BADGES.vip;
+            case 'founder':
+              return BADGES.founder;
+            case 'moderator':
+              return BADGES.moderator;
           }
           return 0;
         })
         .forEach((val) => {
-          sublevel |= val;
+          badges |= val;
         });
-      onChatCallback(sublevel, data.sender.username.toLowerCase(), data.sender.username, data.content);
+      onChatCallback(badges, data.sender.username.toLowerCase(), data.sender.username, data.content);
     }
   });
   return ws;
 }
 
 module.exports = {
+  BADGES,
   getKickChatStream,
-  SUBLEVEL,
   getKickChatroomId,
 };

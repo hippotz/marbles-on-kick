@@ -43,7 +43,7 @@
     });
   }
   const nextButtonColor = ' bg-blue-500 hover:bg-blue-700 ';
-  const extraButtonColor = ' bg-stone-500 hover:bg-stone-700 ';
+  const extraButtonColor = ' bg-gray-500 hover:bg-gray-700 ';
   const bigButtonClasses = ' text-white font-bold py-2 px-4 rounded ';
   const smallButtonClasses = ' text-white font-bold py-1 px-2 text-xs rounded ';
 </script>
@@ -144,10 +144,12 @@
                       window.electron.send('launch-marbles', { ...$kickData, path: $marblesExecData?.path })}
                     >Launch Marbles</button
                   >
-                  <button class={extraButtonColor + smallButtonClasses}
-                  on:click={() => {
-                    window.electron.send('launch-server', $kickData)
-                  }}>Launch chat server only</button>
+                  <button
+                    class={extraButtonColor + smallButtonClasses}
+                    on:click={() => {
+                      window.electron.send('launch-server', $kickData);
+                    }}>Launch chat server only</button
+                  >
                 {:else}
                   <div>Running...</div>
                   {#if $marblesStarted}
@@ -170,7 +172,7 @@
       </div>
     {/if}
   </div>
-  <div class="border-t-2 border-red-400 p-1">
+  <div class="border-t-2 border-gray-600 p-1">
     <div class="flex justify-end">
       <button
         class={extraButtonColor + smallButtonClasses + ' mr-2'}
