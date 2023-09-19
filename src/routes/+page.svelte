@@ -114,6 +114,7 @@
                   <input
                     type="text"
                     bind:value={$kickData.username}
+                    readonly={$started}
                     on:keyup={(event) =>
                       window.electron.send('set-kick-username', {
                         username: event.target.value,
@@ -125,6 +126,7 @@
                   Kick chatroomId:
                   <input
                     type="text"
+                    readonly={$started}
                     bind:value={$kickData.chatroomId}
                     on:change={(event) => ($kickData.chatroomId = event.target.value)}
                   />
