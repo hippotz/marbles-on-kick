@@ -23,7 +23,7 @@ function runFakeServer(kickUsername, kickChatroomId) {
       log(
         `on kick callback badges: ${badges}, username: ${username}, displayName: ${displayName}, message: ${message} `
       );
-      let ircMessage = `@badge-info=;badges=ohhay/1,`;
+      let ircMessage = `@badge-info=;badges=ohhay/1`;
       if (badges & BADGES.broadcaster) {
         ircMessage += ',broadcaster/1';
       }
